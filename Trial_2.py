@@ -1,553 +1,253 @@
-#import tkinter module
-from tkinter import Tk, Label, Button, END, W, E, N, S, StringVar, IntVar
-#import random module
-import random
-#import timeit module
-import timeit
+#!/usr/bin/env python3
+"""
+Module: Math Is Easy — Tkinter GUI
+Purpose: Interactive mathematical quiz for dementia prevention cognitive training.
+         GUI frontend for math_quiz_engine.QuizSession.
+Author: Jeremias Ivan, Rizky Nurdiansyah, Arli A. Parikesit
+        Department of Bioinformatics, i3L University, Jakarta, Indonesia
+Date: 2019 (original); refactored 2026
+License: GNU General Public License v3.0
+References:
+    Ivan J, Nurdiansyah R, Parikesit AA. Mathematical Problem Solving: One Way to
+    Prevent Dementia. Iran J Med Inform. 2019; 8(1): e10.
+    https://doi.org/10.30699/IJMI.V8I1.179
+"""
 
-#create a new class
-class Math:
-    #define a constructor (__init__)
-    def __init__(self,master):
+from tkinter import Tk, Label, Button, IntVar, StringVar, W, E, N, S
+from math_quiz_engine import QuizSession, DIFFICULTY_RANGES
 
-        self.master=master              #set the value of self.master
-        master.title("Math Is Easy")    #set the name of the GUI
+# ── Colour palette ────────────────────────────────────────────────────
+BG_INTRO  = "#ccd8ff"
+BG_PANEL  = "#809dff"
+BG_DARK   = "black"
+FG_LIGHT  = "white"
 
-        self.total=''           #default value of total (string)
-        self.entered_number=0   #default value of entered number (integer)
-        self.nentry=''          #default value of entered number (string)
-        self.x = 0              #default vlaue of variable x (integer)
-        self.greet1=''          #default value of variable greet1 (string)
-        self.greet2=''          #default value of variable greet2 (string)
+FONT_TITLE  = ("Comic Sans MS", 20, "bold")
+FONT_BODY   = ("Comic Sans MS", 12)
+FONT_SCORE  = ("Comic Sans MS", 10)
+FONT_EQ     = ("Cambria Math", 30, "bold")
+FONT_ENTRY  = ("Arial", 20, "bold")
+FONT_BTN    = ("Arial", 18, "bold")
+FONT_SMBTN  = ("Arial", 13, "bold")
+FONT_LVLBTN = ("Arial", 11, "bold")
 
-        self.r = 0
-        self.w = 0
-        self.df = ''
-        
-        #create and set the properties of every label   
-        self.right_label=Label(master,text='Right:',font=('Comic Sans MS',10),bg='black',fg='white')
-        self.wrong_label=Label(master,text='Wrong:',font=('Comic Sans MS',10),bg='black',fg='white')
-       
-        self.r_label_text=IntVar()
-        self.r_label_text.set(self.r)
-        self.r_label=Label(master,textvariable=self.r_label_text,font=('Comic Sans MS',10),bg='black',fg='white')
+DIFFICULTY_HINT = (
+    "Easy:   numbers 0 – 10\n"
+    "Medium: numbers 11 – 20\n"
+    "Hard:   numbers 21 – 30"
+)
 
-        self.w_label_text=IntVar()
-        self.w_label_text.set(self.w)
-        self.w_label=Label(master,textvariable=self.w_label_text,font=('Comic Sans MS',10),bg='black',fg='white')
-        
-        self.total_label_text=StringVar()
-        self.total_label_text.set(self.total)
-        self.total_label=Label(master,textvariable=self.total_label_text,width=13,justify='center',font=('Cambria Math',30,'bold'),bg='black',fg='white')
 
-        self.label1=Label(master,text="\nMath Is Easy", font=('Comic Sans MS',20,'bold') , justify='center', bg='#ccd8ff')
-        self.label2=Label(master,text='''In this simulator, there will be 5
-problems for every round, including
-addition, subtraction, or
-multiplication between numbers.
+class MathApp:
+    """Tkinter GUI for the Math Is Easy quiz."""
 
-Happy calculating!''', justify='center', font=('Comic Sans MS',12), bg='#ccd8ff')
+    def __init__(self, master: Tk) -> None:
+        self.master = master
+        master.title("Math Is Easy")
+        master.resizable(False, False)
 
-        self.greet1_label_text=StringVar()
-        self.greet1_label_text.set(self.greet1)
-        self.greet1_label=Label(master,textvariable=self.greet1_label_text, font=('Comic Sans MS',20), justify='center', bg='#809dff')
+        # ── Internal state ────────────────────────────────────────────
+        self._session: QuizSession | None = None
+        self._difficulty: str = ""
+        self._nentry: str = ""       # current typed digits
 
-        self.greet2_label_text=StringVar()
-        self.greet2_label_text.set(self.greet2)
-        self.greet2_label=Label(master,textvariable=self.greet2_label_text, font=('Comic Sans MS',12), justify='center', bg='#809dff')
+        # ── StringVar / IntVar for reactive labels ────────────────────
+        self._equation_var  = StringVar(value="")
+        self._entry_var     = StringVar(value="")
+        self._right_var     = IntVar(value=0)
+        self._wrong_var     = IntVar(value=0)
+        self._status1_var   = StringVar(value="")
+        self._status2_var   = StringVar(value="")
 
-        self.emptylabel1=Label(master,text='', width = 2, bg='#ccd8ff')
-        self.emptylabel2=Label(master,text='', width = 2, bg='#ccd8ff')
-        self.emptylabel3=Label(master,text='', width = 2, bg='#ccd8ff')
-        self.emptylabel4=Label(master,text='', width = 2, bg='#ccd8ff')
-        self.emptylabel5=Label(master,text='', width = 2, bg='#ccd8ff')
-        self.emptylabel6=Label(master,text='', width = 2, bg='#809dff')
-        self.emptylabel7=Label(master,text='', width = 2, bg='#ccd8ff')
-    
-        self.entry_label_text=StringVar()
-        self.entry_label_text.set(self.nentry)
-        self.entry=Label(master, textvariable=self.entry_label_text, font=('Arial', 20, 'bold'), justify='center', bg='white')
-        
-        #create and set the properties of every button (number and operator)
-        self.one=Button(master,text="1",font=('Arial',18,'bold'), width = 3, bg='#809dff', command=lambda:self.validate(1))
-        self.two=Button(master,text="2",font=('Arial',18,'bold'), width = 3, bg='#809dff',command=lambda:self.validate(2))    
-        self.three=Button(master,text="3",font=('Arial',18,'bold'), width = 3, bg='#809dff',command=lambda:self.validate(3))  
-        self.four=Button(master,text="4",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(4))   
-        self.five=Button(master,text="5",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(5))  
-        self.six=Button(master,text="6",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(6))    
-        self.seven=Button(master,text="7",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(7))  
-        self.eight=Button(master,text="8",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(8))  
-        self.nine=Button(master,text="9",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(9))   
-        self.zero=Button(master,text="0",font=('Arial',18,'bold'), bg='#809dff',command=lambda:self.validate(0))
-        self.submit_button=Button(master,text="Enter",font=('Arial',13,'bold'), bg='#809dff',command=lambda:self.update("submit"))
-        self.delete_button=Button(master,text="Del",font=('Arial',13,'bold'), bg='#809dff',command=lambda:self.update("delete"))
-        self.reset_button=Button(master,text="RESET",font=('Arial',13,'bold'), bg='#809dff',command=lambda:self.update("reset"))
-        self.start_button=Button(master,text="START",font=('Arial',13,'bold'), bg='#809dff',command=lambda:self.initnumber(0))
-        self.minus_button=Button(master,text='-',font=('Arial',18,'bold'), width = 4, bg='#809dff',command=lambda:self.validate('-'))
+        self._build_ui()
 
-        self.easy_button=Button(master,text='Easy',font=('Arial',11,'bold'), width = 4, bg='#809dff',command=lambda:self.level('easy'))
-        self.medium_button=Button(master,text='Medium',font=('Arial',11,'bold'), width = 4, bg='#809dff',command=lambda:self.level('medium'))
-        self.hard_button=Button(master,text='Hard',font=('Arial',11,'bold'), width = 4, bg='#809dff',command=lambda:self.level('hard'))
-        self.q_button=Button(master,text='?',font=('Arial',11,'bold'), width = 4, bg='#809dff',command=lambda:self.level('question'))
-        
-        #set the position of every label
-        self.label1.grid(row=1,column=1,columnspan=4, sticky=W+E+N+S)
-        self.label2.grid(row=2,column=1,columnspan=4, rowspan=3, sticky=W+E+N+S)
-        
-        self.emptylabel1.grid(row=0, column=0, columnspan=16, sticky=W+E+N+S)
-        self.emptylabel2.grid(row=0, column=5, rowspan=6, sticky=W+E+N+S)
-        self.emptylabel3.grid(row=0, column=10, rowspan=6, sticky=W+E+N+S)
-        self.emptylabel4.grid(row=0, column=15, rowspan=6, sticky=W+E+N+S)
-        self.emptylabel5.grid(row=6, column=0, columnspan=16, sticky=W+E+N+S)
-        self.emptylabel6.grid(row=7, column=0, columnspan=16, sticky=W+E+N+S)
-        self.emptylabel7.grid(row=0, column=0, rowspan=6, sticky=W+E+N+S)
+    # ══════════════════════════════════════════════════════════════════
+    # UI construction
+    # ══════════════════════════════════════════════════════════════════
 
-        self.total_label.grid(row=1, column=6, columnspan=4, rowspan = 3, sticky=W+E+N+S)
+    def _build_ui(self) -> None:
+        m = self.master
 
-        self.right_label.grid(row=4, column=6, sticky=W+E+N+S)
-        self.wrong_label.grid(row=4, column=8, sticky=W+E+N+S)
-        self.r_label.grid(row=4, column=7, sticky=W+E+N+S)
-        self.w_label.grid(row=4, column=9, sticky=W+E+N+S)
-        
-        self.greet1_label.grid(row=8,column=0,columnspan=16, sticky=W+E+N+S)
-        self.greet2_label.grid(row=9,column=0,columnspan=16, sticky=W+E+N+S)
-        self.entry.grid(row=1,column=11,columnspan=4, sticky=W+E+N+S)
+        # ── Spacer rows / columns ─────────────────────────────────────
+        for col in (0, 5, 10, 15):
+            Label(m, text="", width=2, bg=BG_INTRO).grid(row=0, column=col, rowspan=6, sticky=W+E+N+S)
+        Label(m, text="", bg=BG_INTRO).grid(row=0, column=0, columnspan=16, sticky=W+E+N+S)
+        Label(m, text="", bg=BG_INTRO).grid(row=6, column=0, columnspan=16, sticky=W+E+N+S)
+        Label(m, text="", bg=BG_PANEL).grid(row=7, column=0, columnspan=16, sticky=W+E+N+S)
 
-        #set the position of every button (number and operator)
-        self.submit_button.grid(row=4,column=14, rowspan=2, sticky=W+E+N+S)
-        self.delete_button.grid(row=3,column=14, sticky=W+E+N+S)
-        self.reset_button.grid(row=5,column=8,columnspan=2, sticky=W+E+N+S)
-        self.one.grid(row=2,column=11, sticky=W+E+N+S)
-        self.two.grid(row=2,column=12, sticky=W+E+N+S)
-        self.three.grid(row=2,column=13, sticky=W+E+N+S)
-        self.four.grid(row=3,column=11, sticky=W+E+N+S)
-        self.five.grid(row=3,column=12, sticky=W+E+N+S)
-        self.six.grid(row=3,column=13, sticky=W+E+N+S)
-        self.seven.grid(row=4,column=11, sticky=W+E+N+S)
-        self.eight.grid(row=4,column=12, sticky=W+E+N+S)
-        self.nine.grid(row=4,column=13, sticky=W+E+N+S)
-        self.zero.grid(row=5,column=11, columnspan=3, sticky=W+E+N+S)
-        self.start_button.grid(row=5,column=6,columnspan=2, sticky=W+E+N+S)
-        self.minus_button.grid(row=2,column=14, sticky=W+E+N+S)
+        # ── Upper-left: intro ─────────────────────────────────────────
+        Label(m, text="\nMath Is Easy",
+              font=FONT_TITLE, justify="center", bg=BG_INTRO
+              ).grid(row=1, column=1, columnspan=4, sticky=W+E+N+S)
 
-        self.easy_button.grid(row=5, column=1, sticky=W+E+N+S)
-        self.medium_button.grid(row=5, column=2, sticky=W+E+N+S)
-        self.hard_button.grid(row=5, column=3, sticky=W+E+N+S)
-        self.q_button.grid(row=5, column=4, sticky=W+E+N+S)
+        Label(m, text=(
+                "In this quiz, there will be 5 problems\n"
+                "per round — addition, subtraction,\n"
+                "or multiplication between two numbers.\n\n"
+                "Happy calculating!"
+              ), justify="center", font=FONT_BODY, bg=BG_INTRO
+              ).grid(row=2, column=1, columnspan=4, rowspan=3, sticky=W+E+N+S)
 
-    def level(self,h):
-        if h == 'easy':
-            self.df = 'Easy'
-            self.greet1='Easy'
-            self.greet2=''
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            self.nentry = ''                        #clear the value of nentry
-            self.total = ''                         #clear the value of total
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.entry_label_text.set(self.nentry)
-            
-        elif h == 'medium':
-            self.df = 'Medium'
-            self.greet1='Medium'
-            self.greet2=''
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            self.nentry = ''                        #clear the value of nentry
-            self.total = ''                         #clear the value of total
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.entry_label_text.set(self.nentry)
-            
-        elif h == 'hard':
-            self.df = 'Hard'
-            self.greet1='Hard'
-            self.greet2=''
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            self.nentry = ''                        #clear the value of nentry
-            self.total = ''                         #clear the value of total
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.entry_label_text.set(self.nentry)
-            
+        # ── Upper-middle: equation + scoreboard ───────────────────────
+        Label(m, textvariable=self._equation_var,
+              width=13, justify="center", font=FONT_EQ, bg=BG_DARK, fg=FG_LIGHT
+              ).grid(row=1, column=6, columnspan=4, rowspan=3, sticky=W+E+N+S)
+
+        Label(m, text="Right:", font=FONT_SCORE, bg=BG_DARK, fg=FG_LIGHT
+              ).grid(row=4, column=6, sticky=W+E+N+S)
+        Label(m, textvariable=self._right_var, font=FONT_SCORE, bg=BG_DARK, fg=FG_LIGHT
+              ).grid(row=4, column=7, sticky=W+E+N+S)
+        Label(m, text="Wrong:", font=FONT_SCORE, bg=BG_DARK, fg=FG_LIGHT
+              ).grid(row=4, column=8, sticky=W+E+N+S)
+        Label(m, textvariable=self._wrong_var, font=FONT_SCORE, bg=BG_DARK, fg=FG_LIGHT
+              ).grid(row=4, column=9, sticky=W+E+N+S)
+
+        # ── Upper-right: answer entry display + numpad ────────────────
+        Label(m, textvariable=self._entry_var,
+              font=FONT_ENTRY, justify="center", bg="white"
+              ).grid(row=1, column=11, columnspan=4, sticky=W+E+N+S)
+
+        self._minus_btn = Button(m, text="-", font=FONT_BTN, width=4,
+                                  bg=BG_PANEL, command=lambda: self._press("-"))
+        self._minus_btn.grid(row=2, column=14, sticky=W+E+N+S)
+
+        numpad = [(1,2,11),(2,2,12),(3,2,13),
+                  (4,3,11),(5,3,12),(6,3,13),
+                  (7,4,11),(8,4,12),(9,4,13)]
+        for val, row, col in numpad:
+            Button(m, text=str(val), font=FONT_BTN, width=3, bg=BG_PANEL,
+                   command=lambda v=val: self._press(v)
+                   ).grid(row=row, column=col, sticky=W+E+N+S)
+
+        Button(m, text="0", font=FONT_BTN, bg=BG_PANEL,
+               command=lambda: self._press(0)
+               ).grid(row=5, column=11, columnspan=3, sticky=W+E+N+S)
+
+        Button(m, text="Del", font=FONT_SMBTN, bg=BG_PANEL,
+               command=lambda: self._action("delete")
+               ).grid(row=3, column=14, sticky=W+E+N+S)
+
+        Button(m, text="Enter", font=FONT_SMBTN, bg=BG_PANEL,
+               command=lambda: self._action("submit")
+               ).grid(row=4, column=14, rowspan=2, sticky=W+E+N+S)
+
+        # ── Middle controls: START / RESET ────────────────────────────
+        Button(m, text="START", font=FONT_SMBTN, bg=BG_PANEL,
+               command=self._start
+               ).grid(row=5, column=6, columnspan=2, sticky=W+E+N+S)
+
+        Button(m, text="RESET", font=FONT_SMBTN, bg=BG_PANEL,
+               command=self._reset
+               ).grid(row=5, column=8, columnspan=2, sticky=W+E+N+S)
+
+        # ── Difficulty buttons ────────────────────────────────────────
+        for label, col in (("Easy", 1), ("Medium", 2), ("Hard", 3), ("?", 4)):
+            Button(m, text=label, font=FONT_LVLBTN, width=4, bg=BG_PANEL,
+                   command=lambda l=label: self._set_difficulty(l)
+                   ).grid(row=5, column=col, sticky=W+E+N+S)
+
+        # ── Bottom status row ─────────────────────────────────────────
+        Label(m, textvariable=self._status1_var,
+              font=("Comic Sans MS", 20), justify="center", bg=BG_PANEL
+              ).grid(row=8, column=0, columnspan=16, sticky=W+E+N+S)
+        Label(m, textvariable=self._status2_var,
+              font=FONT_BODY, justify="center", bg=BG_PANEL
+              ).grid(row=9, column=0, columnspan=16, sticky=W+E+N+S)
+
+    # ══════════════════════════════════════════════════════════════════
+    # Event handlers
+    # ══════════════════════════════════════════════════════════════════
+
+    def _set_difficulty(self, label: str) -> None:
+        if label == "?":
+            self._status1_var.set("Description")
+            self._status2_var.set(DIFFICULTY_HINT)
+            return
+
+        self._difficulty = label.lower()
+        self._status1_var.set(label)
+        self._status2_var.set("")
+        self._clear_scores()
+        self._equation_var.set("")
+        self._clear_entry()
+
+    def _start(self) -> None:
+        if self._difficulty not in DIFFICULTY_RANGES:
+            self._status1_var.set("Choose difficulty first!")
+            return
+        self._session = QuizSession(self._difficulty)
+        self._equation_var.set(self._session.equation_str)
+        self._clear_entry()
+        self._clear_scores()
+        self._status1_var.set(self._difficulty.capitalize())
+        self._status2_var.set("")
+
+    def _press(self, value: int | str) -> None:
+        if value == "-":
+            if self._nentry == "":       # only allow leading minus
+                self._nentry = "-"
         else:
-            self.greet1='Description'
-            self.greet2='''Easy: equation between two numbers range from 0-10
-Medium: equation between two numbers range from 11-20
-Hard: equation between two numbers range from 21-30\n'''
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            self.nentry = ''                        #clear the value of nentry
-            self.total = ''                         #clear the value of total
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.entry_label_text.set(self.nentry)
-        self.greet1_label_text.set(self.greet1)
-        self.greet2_label_text.set(self.greet2)
-            
-        
-    #define a function    
-    def initnumber(self,x):
-        if self.df == 'Easy':
-            self.start = timeit.default_timer() #start the timer
-            self.a = str(random.randint(0,10))  #random a number between 0-10
-            self.b = '+','-','*'                #set the operand options
-            self.c = str(random.randint(0,10))  #random a number between 0-10
-            self.d = random.choice(self.b)      #random the operands
-            self.e = self.a+self.d+self.c       #combine the random number and operand
-            self.total = self.e                 #set the value of self.total
+            self._nentry += str(value)
+        self._entry_var.set(self._nentry)
 
-            self.x=0                                #set the value of x (zero iteration)
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.nentry=''                          #set the value of nentry
-            self.entry_label_text.set(self.nentry)  #set the text of entry label
-            self.greet1='Easy'                          #set the value of greet1
-            self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-            self.greet2=''                          #set the value of greet2
-            self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            
-        elif self.df == 'Medium':
-            self.start = timeit.default_timer() #start the timer
-            self.a = str(random.randint(11,20))  #random a number between 0-10
-            self.b = '+','-','*'                #set the operand options
-            self.c = str(random.randint(11,20))  #random a number between 0-10
-            self.d = random.choice(self.b)      #random the operands
-            self.e = self.a+self.d+self.c       #combine the random number and operand
-            self.total = self.e                 #set the value of self.total
+    def _action(self, method: str) -> None:
+        if method == "delete":
+            self._nentry = self._nentry[:-1]
+            self._entry_var.set(self._nentry)
 
-            self.x=0                                #set the value of x (zero iteration)
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.nentry=''                          #set the value of nentry
-            self.entry_label_text.set(self.nentry)  #set the text of entry label
-            self.greet1='Medium'                          #set the value of greet1
-            self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-            self.greet2=''                          #set the value of greet2
-            self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            
-        elif self.df == 'Hard':
-            self.start = timeit.default_timer() #start the timer
-            self.a = str(random.randint(21,30))  #random a number between 0-10
-            self.b = '+','-','*'                #set the operand options
-            self.c = str(random.randint(21,30))  #random a number between 0-10
-            self.d = random.choice(self.b)      #random the operands
-            self.e = self.a+self.d+self.c       #combine the random number and operand
-            self.total = self.e                 #set the value of self.total
-
-            self.x=0                                #set the value of x (zero iteration)
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.nentry=''                          #set the value of nentry
-            self.entry_label_text.set(self.nentry)  #set the text of entry label
-            self.greet1='Hard'                          #set the value of greet1
-            self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-            self.greet2=''                          #set the value of greet2
-            self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            
-        else:
-            self.x=0                                #set the value of x (zero iteration)
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.nentry=''                          #set the value of nentry
-            self.entry_label_text.set(self.nentry)  #set the text of entry label
-            self.greet1=''                          #set the value of greet1
-            self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-            self.greet2=''                          #set the value of greet2
-            self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-
-    #define a function        
-    def randomnumber(self,x):
-        #create a control statement (if iteration is lower than 5 times)
-        if self.df == 'Easy':
-            if x<5:
-                self.a = str(random.randint(0,10))  #random a number between 0-10
-                self.b = '+','-','*'                #set the operand options
-                self.c = str(random.randint(0,10))  #random a number between 0-10
-                self.d = random.choice(self.b)      #random the operands
-                self.e = self.a+self.d+self.c       #combine the random number and operand
-                self.total = self.e                 #set the value of self.total
-                self.greet1='Easy'                          #set the value of greet1
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2=''                          #clear the value of greet2
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            #create a control statement (if iteration is equal to 5)
-            elif x==5:
-                self.stop = timeit.default_timer()      #stop the timer
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.settime=str(round(self.stop-self.start,2))                                         #calculate the calculation time
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            else:
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-        elif self.df == 'Medium':
-            if x<5:
-                self.a = str(random.randint(11,20))  #random a number between 0-10
-                self.b = '+','-','*'                #set the operand options
-                self.c = str(random.randint(11,20))  #random a number between 0-10
-                self.d = random.choice(self.b)      #random the operands
-                self.e = self.a+self.d+self.c       #combine the random number and operand
-                self.total = self.e                 #set the value of self.total
-                self.greet1='Medium'                          #set the value of greet1
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2=''                          #clear the value of greet2
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            #create a control statement (if iteration is equal to 5)
-            elif x==5:
-                self.stop = timeit.default_timer()      #stop the timer
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.settime=str(round(self.stop-self.start,2))                                         #calculate the calculation time
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            else:
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-        elif self.df == 'Hard':
-            if x<5:
-                self.a = str(random.randint(21,30))  #random a number between 0-10
-                self.b = '+','-','*'                #set the operand options
-                self.c = str(random.randint(21,30))  #random a number between 0-10
-                self.d = random.choice(self.b)      #random the operands
-                self.e = self.a+self.d+self.c       #combine the random number and operand
-                self.total = self.e                 #set the value of self.total
-                self.greet1='Hard'                          #set the value of greet1
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2=''                          #clear the value of greet2
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            #create a control statement (if iteration is equal to 5)
-            elif x==5:
-                self.stop = timeit.default_timer()      #stop the timer
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.settime=str(round(self.stop-self.start,2))                                         #calculate the calculation time
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-                
-            else:
-                self.total = ''                         #clear the value of total
-                self.nentry = ''                        #clear the value of nentry
-                self.entry_label_text.set(self.nentry)  #set the text of entry label
-
-                self.greet1 = "Good Job!"                                                             #set the value of greet1
-                self.greet2 = "Your calculation time: "+self.settime+" seconds"+"\nKeep practicing!\n"  #set the value of greet2
-            
-                self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-                self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-        else:
-            self.total=''
-            
-        self.total_label_text.set(self.total)   #set the text of total label
-        
-    #define a function when number or minus buttons are clicked
-    def validate(self,new_text):
-        if new_text == '-':                         #if the clicked button is minus button
-            self.nentry += str(new_text)            #update the value of entered number
-            self.entry_label_text.set(self.nentry)  #update the text of entry label
-        else:
-            self.nentry += str(new_text)            #update the value of entered number (string)
-            self.entered_number = int(self.nentry)  #update the value of entered number (integer)
-            self.entry_label_text.set(self.nentry)  #update the text of entry label
-     
-    #define a function when operator buttons are clicked    
-    def update(self, method):
-        if method == "submit":              #if submit button is clicked
+        elif method == "submit":
+            if self._session is None or self._session.finished:
+                return
+            if self._nentry in ("", "-"):
+                return
             try:
-                if self.d == '+':                               #if the operand is plus
-                    self.total = int(self.a) + int(self.c)      #add the two random numbers
-                    #if the value of total is equal with the number that is inputted by the user
-                    if self.total == int(self.entered_number):  
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.randomnumber(self.x+1)     #move to the next problem
-                            self.nentry=''                  #clear the value of nentry
-                            self.x = self.x+1               #add the value of x by one after every iteration
-                            self.r = self.r+1
-                            self.w = self.w
-                                                
-                    else:
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.nentry=''                  #if the answer is wrong, clear the value of nentry
-                            self.w = self.w+1
-                            self.r = self.r
-                        
-                if self.d == '-':                               #if the operand is minus
-                    self.total = int(self.a) - int(self.c)      #subtract the two random numbers
-                    #if the value of total is equal with the number that is inputted by the user
-                    if self.total == int(self.entered_number):
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.randomnumber(self.x+1)     #move to the next problem
-                            self.nentry=''                  #clear the value of nentry
-                            self.x = self.x+1               #add the value of x by one after every iteration
-                            self.r = self.r+1
-                            self.w = self.w
-                        
-                    else:
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.nentry=''                  #if the answer is wrong, clear the value of nentry
-                            self.w = self.w+1
-                            self.r = self.r
-                        
-                if self.d == '*':                               #if the operand is star (multiplication)
-                    self.total = int(self.a) * int(self.c)      #multiply the two random numbers
-                    if self.total == int(self.entered_number):
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.randomnumber(self.x+1)     #move to the next problem
-                            self.nentry=''                  #clear the value of nentry
-                            self.x = self.x+1               #add the value of x by one after every iteration
-                            self.r = self.r+1
-                            self.w = self.w
-                        
-                    else:
-                        if self.greet2 != '':
-                            self.nentry=''
-                            self.w = self.w
-                            self.r = self.r
-                        elif self.nentry == '':
-                            self.w = self.w
-                            self.r = self.r
-                        else:
-                            self.nentry = ''                  #if the answer is wrong, clear the value of nentry
-                            self.w = self.w+1
-                            self.r = self.r
-                else:
-                    self.nentry = ''
-                    self.w = self.w
-                    self.r = self.r
-                      
-                self.r_label_text.set(self.r)
-                self.w_label_text.set(self.w)
+                answer = int(self._nentry)
+            except ValueError:
+                self._clear_entry()
+                return
 
-            #create an exception handler if there is an Attribute Error
-            except AttributeError:
-                self.nentry=''                          #clear the value of nentry
-                self.w = self.w
-                self.r = self.r
-                self.r_label_text.set(self.r)
-                self.w_label_text.set(self.w)
-                
-        if method == 'delete':              #if delete button is clicked
-            try:
-                self.nentry = list(self.nentry)         #change the equation into a list 
-                del self.nentry[-1]                     #delete the last character
-                self.nentry = ''.join(self.nentry)      #re-join all characters in the list
-                self.entered_number = int(self.nentry)  #update the value of entered_number
+            correct = self._session.submit_answer(answer)
+            self._right_var.set(self._session.right)
+            self._wrong_var.set(self._session.wrong)
+            self._clear_entry()
 
-            #create an exception handler if there is an Index Error or Value Error
-            except (IndexError, ValueError):
-                self.nentry=''              #clear the value of nentry
+            if self._session.finished:
+                self._equation_var.set("")
+                self._status1_var.set("Good Job!")
+                self._status2_var.set(
+                    f"Your calculation time: {self._session.elapsed} seconds\n"
+                    "Keep practicing!"
+                )
+            elif correct:
+                self._equation_var.set(self._session.equation_str)
+            # wrong answer: keep same equation, user tries again
 
-        if method == 'reset':                       #if reset button is clicked
-            self.nentry = ''                        #clear the value of nentry
-            self.total = ''                         #clear the value of total
-            self.total_label_text.set(self.total)   #set the text of total label
-            self.greet1=''                          #clear the value of greet1
-            self.greet1_label_text.set(self.greet1) #set the text of greet1 label
-            self.greet2=''                          #clear the value of greet2
-            self.greet2_label_text.set(self.greet2) #set the text of greet2 label
-            self.w = 0
-            self.r = 0
-            self.r_label_text.set(self.r)
-            self.w_label_text.set(self.w)
-            self.df = ''
+        elif method == "reset":
+            self._session = None
+            self._difficulty = ""
+            self._equation_var.set("")
+            self._status1_var.set("")
+            self._status2_var.set("")
+            self._clear_scores()
+            self._clear_entry()
 
-        self.entry_label_text.set(self.nentry)  #update the text of entry label
+    def _reset(self) -> None:
+        self._action("reset")
 
-root=Tk()                                   #create an tk/tcl interpreter
-my_gui=Math(root)                           #set the root as parameter of the class
-root.resizable(width=False, height=False)   #the calculator cannot be resized
-root.mainloop()                             #the code loops until the window is closed
+    # ── Helpers ───────────────────────────────────────────────────────
 
-#References
-#Code Review. (2016). Python Calculator using tkinter. [Online] Retrieved from https://codereview.stackexchange.com/questions/141633/python-calculator-using-tkinter [Accessed 19 December 2017].
-#Stack Overflow. (2014). What does calling Tk() actually do?. [Online] Retrieved from https://stackoverflow.com/questions/24729119/what-does-calling-tk-actually-do [Accessed 19 December 2017].
+    def _clear_entry(self) -> None:
+        self._nentry = ""
+        self._entry_var.set("")
+
+    def _clear_scores(self) -> None:
+        self._right_var.set(0)
+        self._wrong_var.set(0)
+
+
+# ── Entry point ───────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    root = Tk()
+    MathApp(root)
+    root.mainloop()
