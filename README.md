@@ -136,3 +136,5 @@ See [LICENSE](LICENSE) for full terms.
 
 Copyright © 2019 Jeremias Ivan, Rizky Nurdiansyah, Arli A. Parikesit.  
 Streamlit port and engine refactor © 2026 Arli A. Parikesit, i3L University.
+
+**AI Assistance Disclaimer**: This codebase was developed with the assistance of Claude Code. While the AI provided code generation, debugging, and structural support, the human developer maintains full responsibility for reviewing, testing, and maintaining all content and functionality.
