@@ -16,7 +16,7 @@ References:
 """
 
 import streamlit as st
-from math_quiz_engine import QuizSession, DIFFICULTY_RANGES
+from math_quiz_engine import QuizSession, DIFFICULTY_RANGES, MAX_QUESTIONS
 
 # ── Page config ───────────────────────────────────────────────────────
 st.set_page_config(
@@ -304,8 +304,11 @@ with col_mid:
 
     # Progress bar
     if ss.session:
-        progress = ss.session.iteration / 5
-        st.progress(progress, text=f"Question {min(ss.session.iteration + 1, 5)} of 5")
+        progress = ss.session.iteration / MAX_QUESTIONS
+        st.progress(
+            progress,
+            text=f"Question {min(ss.session.iteration + 1, MAX_QUESTIONS)} of {MAX_QUESTIONS}",
+        )
 
     st.write("")
 
